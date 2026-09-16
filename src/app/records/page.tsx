@@ -17,7 +17,8 @@ import {
   XCircle,
   CheckCircle2,
   AlertCircle,
-  CheckSquare
+  CheckSquare,
+  FileSpreadsheet
 } from "lucide-react";
 
 export default function RecordsPage() {
@@ -90,6 +91,75 @@ export default function RecordsPage() {
     window.open(`/records/${id}?print=true`, "_blank");
   };
 
+  // Export all bills to CSV/Excel handler
+  const handleExportCSV = () => {
+    if (filteredRecords.length === 0) {
+      showToast("info", "No Records", "There are no records to export.");
+      return;
+    }
+
+    const headers = [
+      "Bill Number",
+      "Date",
+      "Patient ID",
+      "Patient Name",
+      "Doctor Name",
+      "Specialization",
+      "Item #",
+      "Item Code",
+      "Medicine Name",
+      "Manufacturer",
+      "Batch Number",
+      "Expiry Date",
+      "MRP (INR)",
+      "Quantity",
+      "Frequency",
+      "Duration",
+      "Learning Completed Status",
+      "Record Status"
+    ];
+
+    const csvRows: string[][] = [headers];
+
+    filteredRecords.forEach((rec) => {
+      const learningStatus = rec.learningCompleted ? "COMPLETED [X]" : "PENDING [ ]";
+      rec.medicines.forEach((med, idx) => {
+        csvRows.push([
+          `"${rec.billNumber}"`,
+          `"${rec.date}"`,
+          `"${rec.patientId}"`,
+          `"${rec.patientName}"`,
+          `"${rec.doctorName}"`,
+          `"${rec.specialization}"`,
+          `"${idx + 1}"`,
+          `"${med.itemCode || med.itemId}"`,
+          `"${med.itemName.replace(/"/g, '""')}"`,
+          `"${(med.manufacturer || 'Generic').replace(/"/g, '""')}"`,
+          `"${med.batchNumber || 'N/A'}"`,
+          `"${med.expiryDate || 'N/A'}"`,
+          `"${med.mrp ? med.mrp.toFixed(2) : '0.00'}"`,
+          `"${med.quantity}"`,
+          `"${med.frequency}"`,
+          `"${med.duration}"`,
+          `"${learningStatus}"`,
+          `"${rec.status}"`
+        ]);
+      });
+    });
+
+    const csvString = csvRows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `medsim_all_bills_export_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("success", "Export Successful", `Exported ${filteredRecords.length} prescription bills to CSV/Excel.`);
+  };
+
   // Unique list of doctors & patients for select filters
   const uniqueDoctors = Array.from(new Set(records.map((r) => r.doctorId))).map((id) => {
     const rec = records.find((r) => r.doctorId === id);
@@ -113,15 +183,26 @@ export default function RecordsPage() {
             </h2>
           </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search Bill ID, Patient, Doctor..."
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs text-slate-900 outline-none"
-            />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportCSV}
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
+              title="Export all bills to Excel/CSV sheet with Learning Checkbox Status"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Export All Bills (Excel/CSV)</span>
+            </button>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search Bill ID, Patient, Doctor..."
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs text-slate-900 outline-none"
+              />
+            </div>
           </div>
         </div>
 
