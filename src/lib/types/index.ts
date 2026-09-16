@@ -65,6 +65,7 @@ export type GeneratedRecord = {
   specialization: string;
   medicines: PrescriptionMedicine[];
   status: "GENERATED" | "CONFIRMED" | "CANCELLED";
+  learningCompleted?: boolean;
   createdAt: string;
 };
 

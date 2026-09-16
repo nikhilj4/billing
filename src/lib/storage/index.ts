@@ -219,6 +219,18 @@ export function saveRecordsBatch(newRecords: GeneratedRecord[]): void {
   }
 }
 
+export function toggleRecordLearningCompleted(recordId: string): boolean {
+  const records = getRecords();
+  const record = records.find(r => r.id === recordId);
+  if (!record) return false;
+
+  record.learningCompleted = !record.learningCompleted;
+  if (isClient) {
+    localStorage.setItem(KEYS.RECORDS, JSON.stringify(records));
+  }
+  return !!record.learningCompleted;
+}
+
 export function cancelRecord(recordId: string): { record: GeneratedRecord; reversedTransactions: InventoryTransaction[] } | null {
   const records = getRecords();
   const record = records.find(r => r.id === recordId);

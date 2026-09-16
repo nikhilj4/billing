@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { getRecords, cancelRecord } from "@/lib/storage";
+import { getRecords, cancelRecord, toggleRecordLearningCompleted } from "@/lib/storage";
 import { GeneratedRecord } from "@/lib/types";
 import { useToast } from "@/components/Toast";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -16,7 +16,8 @@ import {
   Calendar,
   XCircle,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  CheckSquare
 } from "lucide-react";
 
 export default function RecordsPage() {
@@ -208,6 +209,7 @@ export default function RecordsPage() {
                 <th className="py-3.5 px-6">Patient</th>
                 <th className="py-3.5 px-6">Doctor</th>
                 <th className="py-3.5 px-6 text-center">Medicines</th>
+                <th className="py-3.5 px-6 text-center">Learning Status</th>
                 <th className="py-3.5 px-6">Status</th>
                 <th className="py-3.5 px-6 text-right">Actions</th>
               </tr>
@@ -215,13 +217,13 @@ export default function RecordsPage() {
             <tbody className="divide-y divide-slate-200 font-medium">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
                     No synthetic records found matching the filters.
                   </td>
                 </tr>
               ) : (
                 filteredRecords.map((rec) => (
-                  <tr key={rec.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={rec.id} className={`hover:bg-slate-50/80 transition-colors ${rec.learningCompleted ? "bg-emerald-50/30" : ""}`}>
                     <td className="py-4 px-6 font-mono font-bold text-blue-700">{rec.billNumber}</td>
                     <td className="py-4 px-6 font-mono text-slate-700">{rec.date}</td>
                     <td className="py-4 px-6 font-semibold text-slate-900">{rec.patientName}</td>
@@ -231,6 +233,27 @@ export default function RecordsPage() {
                     </td>
                     <td className="py-4 px-6 text-center font-mono font-bold text-slate-800">
                       {rec.medicines.length}
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={!!rec.learningCompleted}
+                          onChange={() => {
+                            const isNowCompleted = toggleRecordLearningCompleted(rec.id);
+                            showToast(
+                              isNowCompleted ? "success" : "info",
+                              isNowCompleted ? "Learning Completed" : "Marked Uncompleted",
+                              `Bill ${rec.billNumber} learning progress updated.`
+                            );
+                            loadData();
+                          }}
+                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                        />
+                        <span className={`text-[11px] font-bold ${rec.learningCompleted ? "text-emerald-700" : "text-slate-500"}`}>
+                          {rec.learningCompleted ? "Completed" : "Pending"}
+                        </span>
+                      </label>
                     </td>
                     <td className="py-4 px-6">
                       <span

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getRecordById, getTransactionsByRecordId, cancelRecord } from "@/lib/storage";
+import { getRecordById, getTransactionsByRecordId, cancelRecord, toggleRecordLearningCompleted } from "@/lib/storage";
 import { GeneratedRecord, InventoryTransaction } from "@/lib/types";
 import { SyntheticRecordTemplate } from "@/components/SyntheticRecordTemplate";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -117,6 +117,24 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         </div>
 
         <div className="flex items-center gap-3">
+          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!record.learningCompleted}
+              onChange={() => {
+                const isCompleted = toggleRecordLearningCompleted(record.id);
+                showToast(
+                  isCompleted ? "success" : "info",
+                  isCompleted ? "Learning Completed" : "Marked Uncompleted",
+                  `Bill ${record.billNumber} learning progress updated.`
+                );
+                loadRecord();
+              }}
+              className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+            />
+            <span>{record.learningCompleted ? "✓ Learning Completed" : "Mark Learning Completed"}</span>
+          </label>
+
           <button
             onClick={handlePrint}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors"
